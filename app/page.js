@@ -34,8 +34,8 @@ class Group {
 }
 class Chat {
   constructor(titleName, titleSrc) {
-    this.titleSrc;
-    this.titleName;
+    this.titleName = titleName;
+    this.titleSrc = titleSrc;
   }
 }
 export default function app() {
@@ -60,6 +60,7 @@ export default function app() {
 
     // create group class object with grpName and grpUrl and add it to groups array
     console.log(chat);
+    console.log("hi");
     console.log(groups);
   }
   return (
@@ -134,8 +135,9 @@ export default function app() {
               {groups.map((group, index) => (
                 <div
                   key={index}
+                  id={index}
                   onClick={(event) => {
-                    setChatIndex(event.target.getAttribute("key"));
+                    setChatIndex(event.currentTarget.getAttribute("id"));
                   }}
                 >
                   <ContactCard
@@ -163,7 +165,7 @@ export default function app() {
                 >
                   <Box
                     component="img"
-                    src={chat[chatIndex].titleSrc}
+                    src={chat[chatIndex]?.titleSrc || " "}
                     sx={{
                       width: 40,
                       height: 40,
@@ -172,7 +174,7 @@ export default function app() {
                       mb: 1,
                     }}
                   ></Box>
-                  <Box sx={{ ml: 2 }}>{chat[chatIndex].titleName}</Box>
+                  <Box sx={{ ml: 2 }}>{chat[chatIndex]?.titleName || " "}</Box>
                 </Toolbar>
               </AppBar>
             </Box>
