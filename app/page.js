@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 
 import {
   Toolbar,
@@ -23,7 +23,7 @@ import {
 } from "@mui/icons-material";
 import ContactCard from "./contact";
 import GrpCard from "./grpCard";
-
+import ChatComponent from "./chat";
 class Group {
   constructor(grpName, grpUrl, grpLastMsg, grpTimeStamp) {
     this.grpName = grpName;
@@ -36,6 +36,14 @@ class Chat {
   constructor(titleName, titleSrc) {
     this.titleName = titleName;
     this.titleSrc = titleSrc;
+    this.chatArray = [];
+  }
+}
+class ChatClass {
+  constructor(text, timeStamp, timeStampMin) {
+    this.text = text;
+    this.timeStamp = timeStamp;
+    this.timeStampMin = timeStampMin;
   }
 }
 export default function app() {
@@ -43,26 +51,32 @@ export default function app() {
   let [grpUrl, setGrpUrl] = useState("");
   let [createGroupCard, setCreateGroupCard] = useState(false);
   let [chatIndex, setChatIndex] = useState("");
+  let [chatText, setChatText] = useState({});
+
+  // chat input goes here
+  let [chatInput, setChatInput] = useState("");
   function handleClickGroup() {
     setCreateGroupCard(!createGroupCard);
   }
-  //group class
-
-  //groups useState array
+  const buttonRef = useRef(null);
+  function handleEnterPress(event) {
+    if (event.key === "Enter") {
+      buttonRef.current.click();
+    }
+  }
   let [groups, setGroups] = useState([]);
   let [chat, setChat] = useState([]);
+  //runs when create group button is pressed
   function addContent() {
-    //runs when create group button is pressed
     const groupCard = new Group(grpName, grpUrl, "thoms:hi", "2:09");
     setGroups([...groups, groupCard]);
     const groupChat = new Chat(grpName, grpUrl);
     setChat([...chat, groupChat]);
-
-    // create group class object with grpName and grpUrl and add it to groups array
-    console.log(chat);
-    console.log("hi");
-    console.log(groups);
+    const tempChat = chatText;
+    tempChat[groups.length] = [];
+    setChatText(tempChat);
   }
+
   return (
     <>
       <CssBaseline />
@@ -119,6 +133,7 @@ export default function app() {
             <GrpCard
               setGrpName={setGrpName}
               setGrpUrl={setGrpUrl}
+              setCreateGroupCard={setCreateGroupCard}
               addContent={addContent}
             />
           )}
@@ -177,6 +192,95 @@ export default function app() {
                   <Box sx={{ ml: 2 }}>{chat[chatIndex]?.titleName || " "}</Box>
                 </Toolbar>
               </AppBar>
+              <Box
+                sx={{
+                  bgcolor: "beige",
+                  height: "100%",
+                  width: "100%",
+                  position: "relative",
+                  color: "black",
+                }}
+              >
+                {/* chat rendering here */}
+
+                {/* <ChatComponent text="hello" timeStamp="-1" timeStampMin="69" />
+                <ChatComponent
+                  text="how are youuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu"
+                  timeStamp="12"
+                  timeStampMin="69"
+                /> */}
+                {chatText[chatIndex]
+                  ? chatText[chatIndex].map((chatObject, index) => (
+                      <div key={index}>
+                        <ChatComponent
+                          text={chatObject.text}
+                          timeStamp={chatObject.timeStamp}
+                          timeStampMin={chatObject.timeStampMin}
+                        />
+                      </div>
+                    ))
+                  : null}
+                {/* //input box */}
+                <Box
+                  className="text-input"
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    position: "absolute",
+                    bottom: 150,
+
+                    height: 50,
+
+                    width: "100%",
+                  }}
+                >
+                  <Input
+                    type="text"
+                    value={chatInput}
+                    sx={{
+                      color: "white",
+                      justifyContent: "center",
+                      borderRadius: 2,
+                      bgcolor: "black",
+                      width: "50%",
+                      pl: 2,
+                    }}
+                    onChange={(event) => {
+                      setChatInput(event.target.value);
+                    }}
+                    placeholder="enter your msg here  "
+                    onKeyDown={handleEnterPress}
+                    // on change send the data to a useState hook var
+                  ></Input>
+                  <Button
+                    ref={buttonRef}
+                    variant="contained"
+                    onClick={() => {
+                      const tempDate = new Date();
+                      let timeHour = tempDate.getHours();
+                      timeHour -= 12;
+                      const timeMin = tempDate.getMinutes();
+                      // const time= tempDate.get
+                      const tempChatClass = new ChatClass(
+                        chatInput,
+                        timeHour,
+                        timeMin
+                      );
+                      const tempChat = chatText;
+                      tempChat[chatIndex] = [
+                        ...tempChat[chatIndex],
+                        tempChatClass,
+                      ];
+                      setChatText(tempChat);
+                      setChatInput("");
+                    }}
+                  >
+                    {/* new chat object should be added to char.array with chatInput and currentTime as time stamp */}
+                    enter
+                  </Button>
+                </Box>
+              </Box>
             </Box>
           </Box>
         </Container>

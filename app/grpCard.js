@@ -1,6 +1,18 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Card, Box, Input, Button } from "@mui/material";
-export default function grpCard({ setGrpUrl, setGrpName, addContent }) {
+
+export default function grpCard({
+  setGrpUrl,
+  setGrpName,
+  setCreateGroupCard,
+  addContent,
+}) {
+  const buttonRef = useRef(null);
+  function handleEnterPress(event) {
+    if (event.key === "Enter") {
+      buttonRef.current.click();
+    }
+  }
   return (
     <Card
       sx={{
@@ -14,9 +26,10 @@ export default function grpCard({ setGrpUrl, setGrpName, addContent }) {
         bgcolor: "secondary.main",
         display: "flex",
         flexDirection: "column",
+        zIndex: 9000,
       }}
     >
-      <Box>
+      <form onKeyDown={handleEnterPress}>
         Enter Group name:
         <Input
           type="text"
@@ -27,9 +40,6 @@ export default function grpCard({ setGrpUrl, setGrpName, addContent }) {
             setGrpName(event.target.value);
           }}
         ></Input>
-      </Box>
-
-      <Box>
         Profile pic url:
         <Input
           type="text"
@@ -40,10 +50,18 @@ export default function grpCard({ setGrpUrl, setGrpName, addContent }) {
             setGrpUrl(event.target.value);
           }}
         ></Input>
-      </Box>
-      <Button variant="contained" sx={{ mt: 5 }} onClick={addContent}>
-        Create Group
-      </Button>
+        <Button
+          ref={buttonRef}
+          variant="contained"
+          sx={{ mt: 5 }}
+          onClick={() => {
+            addContent();
+            setCreateGroupCard(false);
+          }}
+        >
+          Create Group
+        </Button>
+      </form>
     </Card>
   );
 }
