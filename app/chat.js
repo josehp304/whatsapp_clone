@@ -3,11 +3,17 @@ import { Typography, Box } from "@mui/material";
 import React from "react";
 export default function chatComponent({ text, timeStamp, timeStampMin }) {
   let timeHour;
-  if (timeStamp >> 0) {
+  if (timeStamp > 0) {
     timeHour = `${timeStamp}:${timeStampMin}pm`;
-  } else timeHour = `${timeStamp * -1}:${timeStampMin}am`;
+  } else if (timeStamp == -12) {
+    timeHour = `12:${timeStampMin}am`;
+  } else {
+    const tempTime = timeStamp + 12;
+    timeHour = `${tempTime}:${timeStampMin}am`;
+  }
   return (
     <>
+      -
       <Box
         sx={{
           display: "flex",
