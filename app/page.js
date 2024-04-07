@@ -166,7 +166,12 @@ export default function app() {
             </Box>
             <Box
               className="chat"
-              sx={{ flex: 1, bgcolor: "black", color: "white" }}
+              sx={{
+                flex: 1,
+                bgcolor: "black",
+                color: "white",
+                display: chatText[chatIndex] ? " " : "none",
+              }}
             >
               <AppBar
                 position="relative"
