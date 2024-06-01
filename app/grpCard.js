@@ -1,18 +1,19 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, Box, Input, Button } from "@mui/material";
+import { db } from "./firebaseConfig";
+import { collection, addDoc } from "firebase/firestore";
 
-export default function grpCard({
-  setGrpUrl,
-  setGrpName,
-  setCreateGroupCard,
-  addContent,
-}) {
+export default function grpCard() {
   const buttonRef = useRef(null);
   function handleEnterPress(event) {
     if (event.key === "Enter") {
       buttonRef.current.click();
     }
   }
+  const collectionRef = collection(db, "rooms");
+  const [grpName, setGrpName] = useState("");
+  const [grpUrl, setGrpUrl] = useState("");
   return (
     <Card
       sx={{
@@ -50,17 +51,23 @@ export default function grpCard({
             setGrpUrl(event.target.value);
           }}
         ></Input>
-        <Button
-          ref={buttonRef}
-          variant="contained"
-          sx={{ mt: 5 }}
-          onClick={() => {
-            addContent();
-            setCreateGroupCard(false);
-          }}
-        >
-          Create Group
-        </Button>
+        <Link to={"/"}>
+          <Button
+            ref={buttonRef}
+            variant="contained"
+            sx={{ mt: 5 }}
+            onClick={() => {
+              addDoc(collectionRef, {
+                name: grpName,
+                src: grpUrl,
+                lastMessage: "thoms: hi",
+                lastTime: "10:15",
+              });
+            }}
+          >
+            Create Group
+          </Button>
+        </Link>
       </form>
     </Card>
   );

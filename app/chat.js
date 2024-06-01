@@ -1,19 +1,10 @@
 import { StayPrimaryLandscape } from "@mui/icons-material";
 import { Typography, Box } from "@mui/material";
 import React from "react";
-export default function chatComponent({ text, timeStamp, timeStampMin }) {
-  let timeHour;
-  if (timeStamp > 0) {
-    timeHour = `${timeStamp}:${timeStampMin}pm`;
-  } else if (timeStamp == -12) {
-    timeHour = `12:${timeStampMin}am`;
-  } else {
-    const tempTime = timeStamp + 12;
-    timeHour = `${tempTime}:${timeStampMin}am`;
-  }
+export default function chatComponent({ text, timeStamp }) {
+  let timeStampDate = new Date(timeStamp);
   return (
     <>
-      -
       <Box
         sx={{
           display: "flex",
@@ -35,7 +26,13 @@ export default function chatComponent({ text, timeStamp, timeStampMin }) {
           <Typography variant="h6" sx={{ wordWrap: "break-word" }}>
             {text}
           </Typography>
-          <Typography sx={{ textAlign: "right" }}>{timeHour}</Typography>
+          <Typography sx={{ textAlign: "right" }}>
+            {timeStampDate.toLocaleString("default", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: "true",
+            })}
+          </Typography>
         </Box>
       </Box>
     </>

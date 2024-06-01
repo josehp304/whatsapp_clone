@@ -1,6 +1,9 @@
 "use client";
-import React, { useState, useRef } from "react";
-
+import React, { useState, useRef, useEffect } from "react";
+import { Outlet, Link, NavLink, useLocation } from "react-router-dom";
+import { auth } from "./firebaseConfig";
+import { db } from "./firebaseConfig";
+import { collection, addDoc, getDocs, onSnapshot } from "firebase/firestore";
 import {
   Toolbar,
   AppBar,
@@ -11,6 +14,7 @@ import {
   Box,
   Card,
   Input,
+  autocompleteClasses,
 } from "@mui/material";
 import {
   AccountCircleRounded,
@@ -23,7 +27,11 @@ import {
 } from "@mui/icons-material";
 import ContactCard from "./contact";
 import GrpCard from "./grpCard";
-import ChatComponent from "./chat";
+
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { setUserId } from "firebase/analytics";
+
+// group class created for every group
 class Group {
   constructor(grpName, grpUrl, grpLastMsg, grpTimeStamp) {
     this.grpName = grpName;
@@ -32,13 +40,8 @@ class Group {
     this.grpTimeStamp = grpTimeStamp;
   }
 }
-class Chat {
-  constructor(titleName, titleSrc) {
-    this.titleName = titleName;
-    this.titleSrc = titleSrc;
-    this.chatArray = [];
-  }
-}
+
+// class for each text message
 class ChatClass {
   constructor(text, timeStamp, timeStampMin) {
     this.text = text;
@@ -47,249 +50,224 @@ class ChatClass {
   }
 }
 export default function app() {
+  const authProvider = new GoogleAuthProvider();
   let [grpName, setGrpName] = useState("");
   let [grpUrl, setGrpUrl] = useState("");
-  let [createGroupCard, setCreateGroupCard] = useState(false);
+
+  let location = useLocation();
+
+  let isActive = location.pathname === "/test";
+
+  const collectionRef = collection(db, "rooms");
+  // changes to the id of the group which was clicked, this index is used to display all the data inside chat
   let [chatIndex, setChatIndex] = useState("");
+
+  // all the chat messages are stored inside this object based their assignned group
   let [chatText, setChatText] = useState({});
 
-  // chat input goes here
-  let [chatInput, setChatInput] = useState("");
-  function handleClickGroup() {
-    setCreateGroupCard(!createGroupCard);
-  }
-  const buttonRef = useRef(null);
-  function handleEnterPress(event) {
-    if (event.key === "Enter") {
-      buttonRef.current.click();
-    }
-  }
+  // group class instances are stored inside this array
   let [groups, setGroups] = useState([]);
-  let [chat, setChat] = useState([]);
+  let [fireGroups, setFireGroups] = useState([]);
+
+  let [user, setUser] = useState(auth?.currentUser?.uid);
+
+  // turns a variable into true which causes grpCard component to show up
+
+  const googleSignIn = async () => {
+    try {
+      await signInWithPopup(auth, authProvider);
+      setUser(auth?.currentUser?.uid);
+      console.log("google sign in worked");
+    } catch (error) {
+      console.log(error);
+    }
+  };
   //runs when create group button is pressed
   function addContent() {
-    const groupCard = new Group(grpName, grpUrl, "thoms:hi", "2:09");
-    setGroups([...groups, groupCard]);
-    const groupChat = new Chat(grpName, grpUrl);
-    setChat([...chat, groupChat]);
-    const tempChat = chatText;
-    tempChat[groups.length] = [];
-    setChatText(tempChat);
+    addDoc(collectionRef, {
+      name: grpName,
+      src: grpUrl,
+      lastMessage: "thoms: hi",
+      lastTime: "2:09",
+    });
   }
+  async function fetchGroups() {
+    await onSnapshot(collectionRef, (snapshot) => {
+      setFireGroups(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          data: doc.data(),
+        }))
+      );
+    });
+  }
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
+  // variablePull- direct variable access required for a section that will be converted to a component,
+  //  component- needs to be converted to a component
   return (
     <>
       <CssBaseline />
+      {/* authentication component 1 separate */}
 
-      <Box sx={{ bgcolor: "secondary.side", overflow: "hidden" }}>
-        <Container maxWidth="xl" sx={{ height: "100vh", position: "relative" }}>
-          <AppBar position="relative" sx={{ height: 70, bgcolor: "primary" }}>
-            <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Box
+      {user ? (
+        <>
+          <Box
+            sx={{
+              display: "flex",
+              height: "100vh",
+              placeItems: "center",
+            }}
+          >
+            <Container
+              maxWidth="sm"
+              sx={{
+                bgcolor: "yellow",
+                height: "50vh",
+              }}
+            >
+              <Typography
                 sx={{
-                  display: "flex",
-                  width: 450,
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  // bgcolor: "red",
-                }}
-              >
-                <AccountCircleRounded
-                  sx={{ fontSize: 40, ":hover": { fontSize: 50 } }}
-                />
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <PeopleAltRounded
-                    sx={{
-                      fontSize: 30,
-                      ml: 5,
-                      ":hover": { fontSize: 50 },
-                    }}
-                  />
-                  <SlowMotionVideo
-                    sx={{ fontSize: 30, ml: 2, ":hover": { fontSize: 50 } }}
-                  />
-                  <GroupAddRounded
-                    sx={{ fontSize: 30, ml: 2, ":hover": { fontSize: 50 } }}
-                    onClick={handleClickGroup}
-                  />
-                </Box>
-              </Box>
+                  ml: "auto",
+                  mr: "auto",
 
+                  textAlign: "center",
+                  fontWeight: "1000",
+                }}
+                variant="h4"
+              >
+                {" "}
+                Sign in to Whatsappclone
+              </Typography>
               <Button
+                sx={{
+                  mt: "50%",
+                  ml: "50%",
+                  transform: "translate(-50%,-50%)",
+                }}
                 variant="contained"
-                sx={{
-                  // mx: 10,
-                  fontWeight: 600,
-                  color: "primary.main",
-                  bgcolor: "secondary.main",
-                  ":hover": { color: "black" },
-                }}
+                onClick={googleSignIn}
+                // variablePull
               >
-                <SearchRounded />
+                sign in with google
               </Button>
-            </Toolbar>
-          </AppBar>
-          {createGroupCard && (
-            <GrpCard
-              setGrpName={setGrpName}
-              setGrpUrl={setGrpUrl}
-              setCreateGroupCard={setCreateGroupCard}
-              addContent={addContent}
-            />
-          )}
-          <Box sx={{ display: "flex", height: "100%" }}>
-            <Box
-              className="contact-cards"
-              sx={{
-                width: { lg: 500, md: 400, sm: 300 },
-                height: "100%",
-                bgcolor: "secondary.side2",
-                color: "white",
-              }}
-            >
-              {groups.map((group, index) => (
-                <div
-                  key={index}
-                  id={index}
-                  onClick={(event) => {
-                    setChatIndex(event.currentTarget.getAttribute("id"));
-                  }}
-                >
-                  <ContactCard
-                    imgSrc={group.grpUrl}
-                    groupName={group.grpName}
-                    lastMsg={group.grpLastMsg}
-                    timeStamp={group.grpTimeStamp}
-                  />
-                </div>
-              ))}
-            </Box>
-            <Box
-              className="chat"
-              sx={{
-                flex: 1,
-                bgcolor: "black",
-                color: "white",
-                display: chatText[chatIndex] ? " " : "none",
-              }}
-            >
-              <AppBar
-                position="relative"
-                sx={{ height: 50, bgcolor: "secondary.side3" }}
+            </Container>
+          </Box>
+        </>
+      ) : (
+        <Box sx={{ bgcolor: "secondary.side", overflow: "hidden" }}>
+          <Container
+            maxWidth="xl"
+            sx={{ height: "100vh", position: "relative" }}
+          >
+            {/* navbar component 2 separate */}
+            <AppBar position="relative" sx={{ height: 70, bgcolor: "primary" }}>
+              <Toolbar
+                sx={{ display: "flex", justifyContent: "space-between" }}
               >
-                <Toolbar
+                <Box
                   sx={{
                     display: "flex",
+                    width: 450,
+                    justifyContent: "space-between",
                     alignItems: "center",
                   }}
                 >
-                  <Box
-                    component="img"
-                    src={chat[chatIndex]?.titleSrc || " "}
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: "50%",
-                      ml: 5,
-                      mb: 1,
-                    }}
-                  ></Box>
-                  <Box sx={{ ml: 2 }}>{chat[chatIndex]?.titleName || " "}</Box>
-                </Toolbar>
-              </AppBar>
+                  <AccountCircleRounded
+                    sx={{ fontSize: 40, ":hover": { fontSize: 50 } }}
+                  />
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <PeopleAltRounded
+                      sx={{
+                        fontSize: 30,
+                        ml: 5,
+                        ":hover": { fontSize: 50 },
+                      }}
+                    />
+                    <SlowMotionVideo
+                      sx={{ fontSize: 30, ml: 2, ":hover": { fontSize: 50 } }}
+                    />
+
+                    {/* create two NavLink for test and back to root 
+                        create a conditional statement to return the appropriate navLink
+                        useLocation -done  */}
+                    {isActive ? (
+                      <NavLink to={"/"}>
+                        <GroupAddRounded
+                          sx={{
+                            fontSize: 30,
+                            ml: 2,
+                            ":hover": { fontSize: 50 },
+                          }}
+                        />
+                      </NavLink>
+                    ) : (
+                      <NavLink to={"/test"}>
+                        <GroupAddRounded
+                          sx={{
+                            fontSize: 30,
+                            ml: 2,
+                            ":hover": { fontSize: 50 },
+                          }}
+                        />
+                      </NavLink>
+                    )}
+                  </Box>
+                </Box>
+
+                <Button
+                  variant="contained"
+                  sx={{
+                    // mx: 10,
+                    fontWeight: 600,
+                    color: "primary.main",
+                    bgcolor: "secondary.main",
+                    ":hover": { color: "black" },
+                  }}
+                >
+                  <SearchRounded />
+                </Button>
+              </Toolbar>
+            </AppBar>
+
+            {/* main app body starts here */}
+            {/* groupCard component where user creates new group by entering name and dp url */}
+
+            {/* group-jsx each group is pulled from the groups array and converted into contactCard components  */}
+            <Box sx={{ display: "flex", height: "100%" }}>
               <Box
+                className="contact-cards"
                 sx={{
-                  bgcolor: "beige",
+                  width: { lg: 500, md: 400, sm: 300 },
                   height: "100%",
-                  width: "100%",
-                  position: "relative",
-                  color: "black",
+                  bgcolor: "secondary.side2",
+                  color: "white",
                 }}
               >
-                {/* chat rendering here */}
-
-                {/* <ChatComponent text="hello" timeStamp="-1" timeStampMin="69" />
-                <ChatComponent
-                  text="how are youuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu"
-                  timeStamp="12"
-                  timeStampMin="69"
-                /> */}
-                {chatText[chatIndex]
-                  ? chatText[chatIndex].map((chatObject, index) => (
-                      <div key={index}>
-                        <ChatComponent
-                          text={chatObject.text}
-                          timeStamp={chatObject.timeStamp}
-                          timeStampMin={chatObject.timeStampMin}
-                        />
-                      </div>
-                    ))
-                  : null}
-                {/* //input box */}
-                <Box
-                  className="text-input"
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    position: "absolute",
-                    bottom: 150,
-
-                    height: 50,
-
-                    width: "100%",
-                  }}
-                >
-                  <Input
-                    type="text"
-                    value={chatInput}
-                    sx={{
-                      color: "white",
-                      justifyContent: "center",
-                      borderRadius: 2,
-                      bgcolor: "black",
-                      width: "50%",
-                      pl: 2,
-                    }}
-                    onChange={(event) => {
-                      setChatInput(event.target.value);
-                    }}
-                    placeholder="enter your msg here  "
-                    onKeyDown={handleEnterPress}
-                    // on change send the data to a useState hook var
-                  ></Input>
-                  <Button
-                    ref={buttonRef}
-                    variant="contained"
-                    onClick={() => {
-                      const tempDate = new Date();
-                      let timeHour = tempDate.getHours();
-                      timeHour -= 12;
-                      const timeMin = tempDate.getMinutes();
-                      // const time= tempDate.get
-                      const tempChatClass = new ChatClass(
-                        chatInput,
-                        timeHour,
-                        timeMin
-                      );
-                      const tempChat = chatText;
-                      tempChat[chatIndex] = [
-                        ...tempChat[chatIndex],
-                        tempChatClass,
-                      ];
-                      setChatText(tempChat);
-                      setChatInput("");
-                    }}
-                  >
-                    {/* new chat object should be added to char.array with chatInput and currentTime as time stamp */}
-                    enter
-                  </Button>
-                </Box>
+                {fireGroups.map((group, index) => (
+                  <div key={index} id={group.id}>
+                    <NavLink to={`/chat/${group.id}`}>
+                      <ContactCard
+                        imgSrc={group.data.src}
+                        groupName={group.data.name}
+                        lastMsg={group.data.lastMessage}
+                        timeStamp={group.data.lastTime}
+                      />
+                    </NavLink>
+                  </div>
+                ))}
               </Box>
+
+              {/* chat-jsx commponent 3  */}
+              <Outlet />
+
+              {/* __________chat over_________ */}
             </Box>
-          </Box>
-        </Container>
-      </Box>
+          </Container>
+        </Box>
+      )}
     </>
   );
 }
