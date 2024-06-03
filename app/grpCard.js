@@ -1,3 +1,4 @@
+"use client";
 import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, Box, Input, Button } from "@mui/material";

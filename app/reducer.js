@@ -1,3 +1,4 @@
+"use client";
 export let initialState = {
   user: null,
 };

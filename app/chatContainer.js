@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect, useRef } from "react";
 import { Box, Typography, AppBar, Toolbar, Input, Button } from "@mui/material";
 import ChatComponent from "./chat";
