@@ -3,6 +3,7 @@ import React from "react";
 
 export default function contactCard({ imgSrc, groupName, lastMsg, timeStamp }) {
   return (
+    // add link to
     <>
       <Box
         sx={{
@@ -13,6 +14,8 @@ export default function contactCard({ imgSrc, groupName, lastMsg, timeStamp }) {
           borderBottom: "1px solid white",
           justifyContent: "space-between",
           ":hover": { bgcolor: "black" },
+          textDecoration: "none!important",
+          color: "white",
         }}
       >
         <Box
@@ -21,10 +24,12 @@ export default function contactCard({ imgSrc, groupName, lastMsg, timeStamp }) {
           src={imgSrc}
         ></Box>
         <Box sx={{ width: 200 }}>
-          <Typography variant="h5">{groupName}</Typography>
-          <Typography variant="h8">{lastMsg}</Typography>
+          <Typography variant="h5" sx={{ textDecoration: "none!important" }}>
+            {groupName}
+          </Typography>
+          {/* <Typography variant="h8">{lastMsg}</Typography> */}
         </Box>
-        <Box sx={{ mr: 5 }}>{timeStamp}</Box>
+        {/* <Box sx={{ mr: 5 }}>{timeStamp}</Box> */}
       </Box>
     </>
   );

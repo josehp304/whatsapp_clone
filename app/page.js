@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useContext,
+  useReducer,
+} from "react";
 import { Outlet, Link, NavLink, useLocation } from "react-router-dom";
 import { auth } from "./firebaseConfig";
 import { db } from "./firebaseConfig";
@@ -15,6 +21,7 @@ import {
   Card,
   Input,
   autocompleteClasses,
+  Avatar,
 } from "@mui/material";
 import {
   AccountCircleRounded,
@@ -30,29 +37,14 @@ import GrpCard from "./grpCard";
 
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { setUserId } from "firebase/analytics";
+import { stateContext, useStateUser } from "./StateProvider";
 
-// group class created for every group
-class Group {
-  constructor(grpName, grpUrl, grpLastMsg, grpTimeStamp) {
-    this.grpName = grpName;
-    this.grpUrl = grpUrl;
-    this.grpLastMsg = grpLastMsg;
-    this.grpTimeStamp = grpTimeStamp;
-  }
-}
-
-// class for each text message
-class ChatClass {
-  constructor(text, timeStamp, timeStampMin) {
-    this.text = text;
-    this.timeStamp = timeStamp;
-    this.timeStampMin = timeStampMin;
-  }
-}
 export default function app() {
   const authProvider = new GoogleAuthProvider();
   let [grpName, setGrpName] = useState("");
   let [grpUrl, setGrpUrl] = useState("");
+
+  const [{ user }, dispatch] = useStateUser();
 
   let location = useLocation();
 
@@ -69,28 +61,21 @@ export default function app() {
   let [groups, setGroups] = useState([]);
   let [fireGroups, setFireGroups] = useState([]);
 
-  let [user, setUser] = useState(auth?.currentUser?.uid);
+  // let [user, setUser] = useState(auth?.currentUser?.uid);
 
   // turns a variable into true which causes grpCard component to show up
 
   const googleSignIn = async () => {
     try {
       await signInWithPopup(auth, authProvider);
-      setUser(auth?.currentUser?.uid);
-      console.log("google sign in worked");
+      await dispatch({ type: "SET_USER", user: auth.currentUser });
+      // console.log(user);
+      // console.log(auth.currentUser);
     } catch (error) {
       console.log(error);
     }
   };
-  //runs when create group button is pressed
-  function addContent() {
-    addDoc(collectionRef, {
-      name: grpName,
-      src: grpUrl,
-      lastMessage: "thoms: hi",
-      lastTime: "2:09",
-    });
-  }
+
   async function fetchGroups() {
     await onSnapshot(collectionRef, (snapshot) => {
       setFireGroups(
@@ -104,7 +89,9 @@ export default function app() {
   useEffect(() => {
     fetchGroups();
   }, []);
-
+  useEffect(() => {
+    console.log(user);
+  }, [user]);
   // variablePull- direct variable access required for a section that will be converted to a component,
   //  component- needs to be converted to a component
   return (
@@ -112,7 +99,7 @@ export default function app() {
       <CssBaseline />
       {/* authentication component 1 separate */}
 
-      {user ? (
+      {!user ? (
         <>
           <Box
             sx={{
@@ -175,20 +162,21 @@ export default function app() {
                     alignItems: "center",
                   }}
                 >
-                  <AccountCircleRounded
-                    sx={{ fontSize: 40, ":hover": { fontSize: 50 } }}
-                  />
+                  <Avatar src={user.photoURL} />
+                  <Typography sx={{ fontWeight: "10px", fontSize: "20px" }}>
+                    {user.displayName}
+                  </Typography>
                   <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <PeopleAltRounded
+                    {/* <PeopleAltRounded
                       sx={{
                         fontSize: 30,
                         ml: 5,
                         ":hover": { fontSize: 50 },
                       }}
-                    />
-                    <SlowMotionVideo
+                    /> */}
+                    {/* <SlowMotionVideo
                       sx={{ fontSize: 30, ml: 2, ":hover": { fontSize: 50 } }}
-                    />
+                    /> */}
 
                     {/* create two NavLink for test and back to root 
                         create a conditional statement to return the appropriate navLink
@@ -210,6 +198,8 @@ export default function app() {
                             fontSize: 30,
                             ml: 2,
                             ":hover": { fontSize: 50 },
+                            textDecoration: "none",
+                            color: "white",
                           }}
                         />
                       </NavLink>

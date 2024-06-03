@@ -11,7 +11,9 @@ import {
   orderBy,
   query,
 } from "firebase/firestore";
+import { useStateUser } from "./StateProvider";
 export default function chatContainer() {
+  const [{ user }, dispatch] = useStateUser();
   // chat input goes here
   let [chatInput, setChatInput] = useState("");
   const buttonRef = useRef(null);
@@ -105,6 +107,7 @@ export default function chatContainer() {
                   <ChatComponent
                     text={chatObject.data.text}
                     timeStamp={chatObject.data.timeStamp}
+                    displayName={chatObject.data.displayName}
                     // user name later
                   />
                 </div>
@@ -153,6 +156,7 @@ export default function chatContainer() {
               addDoc(chatCollectionRef, {
                 text: chatInput,
                 timeStamp: timeStampDate.getTime(),
+                displayName: user.displayName,
               });
 
               setChatInput(""); // variablepull
