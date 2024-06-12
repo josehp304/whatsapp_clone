@@ -1,18 +1,34 @@
 "use client";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider, createTheme } from "@mui/material";
-import * as ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Page from "./page";
-import GrpCard from "./grpCard";
-import ChatContainer from "./chatContainer";
-import { auth } from "./firebaseConfig";
-import { StateProvider } from "./StateProvider";
-import reducer, { initialState } from "./reducer";
-import ErrorPage from "./errorPage";
+import dynamic from "next/dynamic";
 
-const inter = Inter({ subsets: ["latin"] });
+import { ThemeProvider, createTheme } from "@mui/material";
+import React from "react";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+// import Page from "./page";
+const Page = dynamic(() => import("./page"), { ssr: false });
+
+// import GrpCard from "./grpCard";
+const GrpCard = dynamic(() => import("./grpCard"), { ssr: false });
+// import ChatContainer from "./chatContainer";
+const ChatContainer = dynamic(() => import("./chatContainer"), { ssr: false });
+
+// import { StateProvider } from "./StateProvider";
+
+const StateProvider = dynamic(() => import("./StateProvider"), { ssr: false });
+// import reducer, { initialState } from "./reducer";
+const reducer = dynamic(
+  () =>
+    import("./reducer").then((mode) => ({
+      default: mode.reducer,
+      initialState: mode.initialState,
+    })),
+  { ssr: false }
+);
+// import ErrorPage from "./errorPage";
+const ErrorPage = dynamic(() => import("./errorPage"), {
+  ssr: false,
+});
+import { useEffect } from "react";
 
 const theme = createTheme({
   palette: {
@@ -41,26 +57,17 @@ const router = createBrowserRouter([
         element: <ChatContainer />,
       },
     ],
-    errorElement: <div> we fucked up, reload or go back </div>,
+    errorElement: <ErrorPage />,
   },
 ]);
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <StateProvider initialState={initialState} reducer={reducer}>
-        <ThemeProvider theme={theme}>
-          <head>
-            <title> Whatsapp</title>
-            <link
-              rel="icon"
-              href="https://p7.hiclipart.com/preview/922/489/218/whatsapp-icon-logo-whatsapp-logo-png.jpg"
-            />
-          </head>
-          <body className={inter.className}>
-            <RouterProvider router={router} />
-          </body>
-        </ThemeProvider>
-      </StateProvider>
-    </html>
+    <StateProvider initialState={initialState} reducer={reducer}>
+      <ThemeProvider theme={theme}>
+        <body>
+          <RouterProvider router={router} />
+        </body>
+      </ThemeProvider>
+    </StateProvider>
   );
 }

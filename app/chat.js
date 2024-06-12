@@ -1,5 +1,5 @@
 "use client";
-import { StayPrimaryLandscape } from "@mui/icons-material";
+
 import { Typography, Box } from "@mui/material";
 import React, { useContext } from "react";
 import { stateContext } from "./StateProvider";
